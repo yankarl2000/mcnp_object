@@ -1,2 +1,2 @@
-# mcnp_parcer
-module to parce mcnp files .i and .o
+# mcnp_parser
+module to parse mcnp files .i and .o
