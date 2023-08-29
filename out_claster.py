@@ -9,7 +9,6 @@ printed number of particles in each file
 
 import pathlib
 import sys
-from math import sqrt
 from os.path import isfile
 from string import digits
 
