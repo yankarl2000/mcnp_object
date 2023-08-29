@@ -179,7 +179,9 @@ class Surface:
         elif self.mnemonic == "ELL": self.equation = ELL(self, log)
         elif self.mnemonic == "WED": self.equation = WED(self, log)
         elif self.mnemonic == "ARB": self.equation = ARB(self, log)
-        else: print("not found such surface mnemonic")
+        else:
+            print("not found such surface mnemonic")
+            print(description_text)
     def move(self, dx, dy, dz):
         self.equation.move(dx, dy, dz)
     def similar_with(self, surface):
@@ -856,6 +858,10 @@ class GQ:
             abs(self.H-equation.H) < EPS and
             abs(self.J-equation.J) < EPS and
             abs(self.K-equation.K) < EPS)
+
+# A is the radius of the forming circle
+# C is the distance from the center of the forming circle to the axis
+# B=C if if the section of the torus is a circle
 
 # Axis is parallel to X-axis elliptical or circular torus
 # (x-x0)^2/B^2 + (sqrt((y-y0)^2 + (z-z0)^2) - A)^2/C^2 - 1 = 0

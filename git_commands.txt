@@ -1,0 +1,7 @@
+git config --global user.name "John Doe" //Ваше имя
+git config --global user.email "johndoe@example.com" //Ваш e-mail
+
+git add -A
+git commit -m "Commit message."
+
+git clone https://github.com/yankarl2000/mcnp_parser

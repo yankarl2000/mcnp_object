@@ -70,9 +70,8 @@ class Ifile:
                                 new_group = False
                     if new_group:
                         groups.append([surf_i, surf_j])
-        print("-----------------------")
-        print(groups)
-        print("-----------------------")
+        return groups
+
     def replace_similar_surfaces(self):
         groups = []
         for i in range(len(self.surfaces)):
