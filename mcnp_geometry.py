@@ -10,6 +10,10 @@ MNEMONICS = ["P", "PX", "PY", "PZ", "SO", "S", "SX", "SY", "SZ",
 class Cell:
     def __init__(self, text):
         self.text = text
+        text = ''
+        for line in self.text.split('\n'):
+            if not(line.startswith('C') or line.startswith('c')):
+                text += line + '\n'
         description_block = True
         comment_block = False
         description_text = ''
@@ -124,6 +128,10 @@ method str return surface without number
 class Surface:
     def __init__(self, text, log=False):
         self.text = text
+        text = ''
+        for line in self.text.split('\n'):
+            if not(line.startswith('C') or line.startswith('c')):
+                text += line + '\n'
         comment_block = False
         description_text = ''
         comment_text = ''
@@ -133,16 +141,29 @@ class Surface:
             if comment_block: comment_text += c
             else: description_text += c
         description_text = description_text.replace('&', '')
+        print('--------------------')
+        print(self.text)
+        print('--------------------')
+        print(text)
+        print('--------------------')
         self.params = description_text.split()
         self.comment_text = comment_text
         if len(self.params) < 3: print("bad description")
         if self.params[0].startswith('*'):
-            #print('find * at beginning')
+            print('find * at beginning surface description')
             self.number = int(self.params[0][1:])
         else:
             self.number = int(self.params[0])
-        self.mnemonic = self.params[1]
-        if self.mnemonic == "P": self.equation = P(self, log)
+        if self.params[1].isdigit():
+            self.transform = int(self.params[1])
+            del self.params[1]
+        else:
+            self.transform = None
+        self.mnemonic = self.params[1].upper()
+        if self.mnemonic == "X": self.equation = X(self, log)
+        elif self.mnemonic == "Y": self.equation = Y(self, log)
+        elif self.mnemonic == "Z": self.equation = Z(self, log)
+        elif self.mnemonic == "P": self.equation = P(self, log)
         elif self.mnemonic == "PX": self.equation = PX(self, log)
         elif self.mnemonic == "PY": self.equation = PY(self, log)
         elif self.mnemonic == "PZ": self.equation = PZ(self, log)
@@ -212,12 +233,69 @@ def similar_vector(x1, y1, z1, x2, y2, z2):
             abs(norm_y1-norm_y2) < EPS and
             abs(norm_z1-norm_z2) < EPS)
 
+# Symmetric about x-axis surface
+# r = sqrt(y^2 + z^2)
+# № X x1 r1 x2 r2
+class X:
+    def __init__(self, surface, log = False):
+        if log: print(f"№ {surface.params[0]} - Symmetric about x-axis surface")
+        (self.x1, self.r1, self.x2,
+            self.r2) = tuple([float(p) for p in surface.params[2:6]])
+    def move(self, dx, dy, dz):
+        print("can't move the Symmetric about x-axis surface")
+    def str_params(self):
+        return [str(p) for p in [self.x1,
+            self.r1, self.x2, self.r2]]
+    def similar_with(self, equation):
+        return (abs(self.x1-equation.x1) < EPS and
+            abs(self.r1-equation.r1) < EPS and
+            abs(self.x2-equation.x2) < EPS and
+            abs(self.r2-equation.r2) < EPS)
+
+# Symmetric about y-axis surface
+# r = sqrt(x^2 + z^2)
+# № Y y1 r1 y2 r2
+class Y:
+    def __init__(self, surface, log = False):
+        if log: print(f"№ {surface.params[0]} - Symmetric about y-axis surface")
+        (self.y1, self.r1, self.y2,
+            self.r2) = tuple([float(p) for p in surface.params[2:6]])
+    def move(self, dx, dy, dz):
+        print("can't move the Symmetric about y-axis surface")
+    def str_params(self):
+        return [str(p) for p in [self.y1,
+            self.r1, self.y2, self.r2]]
+    def similar_with(self, equation):
+        return (abs(self.y1-equation.y1) < EPS and
+            abs(self.r1-equation.r1) < EPS and
+            abs(self.y2-equation.y2) < EPS and
+            abs(self.r2-equation.r2) < EPS)
+
+# Symmetric about z-axis surface
+# r = sqrt(x^2 + y^2)
+# № Z z1 r1 z2 r2
+class Z:
+    def __init__(self, surface, log = False):
+        if log: print(f"№ {surface.params[0]} - Symmetric about z-axis surface")
+        (self.z1, self.r1, self.z2,
+            self.r2) = tuple([float(p) for p in surface.params[2:6]])
+    def move(self, dx, dy, dz):
+        print("can't move the Symmetric about z-axis surface")
+    def str_params(self):
+        return [str(p) for p in [self.z1,
+            self.r1, self.z2, self.r2]]
+    def similar_with(self, equation):
+        return (abs(self.z1-equation.z1) < EPS and
+            abs(self.r1-equation.r1) < EPS and
+            abs(self.z2-equation.z2) < EPS and
+            abs(self.r2-equation.r2) < EPS)
+
 # General plane
 # Ax + By + Cz - D = 0
 # № P A B C D
 class P:
     def __init__(self, surface, log = False):
-        if log: print("№ {} - General plane".format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - General plane")
         (self.A, self.B, self.C,
             self.D) = tuple([float(p) for p in surface.params[2:6]])
     def move(self, dx, dy, dz):
@@ -236,7 +314,7 @@ class P:
 # № P D
 class PX:
     def __init__(self, surface, log = False):
-        if log: print("№ {} - Normal to X-axis plane".format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - Normal to X-axis plane")
         self.D = float(surface.params[2])
     def move(self, dx, dy, dz):
         self.D += dx
@@ -250,7 +328,7 @@ class PX:
 # № P D
 class PY:
     def __init__(self, surface, log = False):
-        if log: print("№ {} - Normal to Y-axis plane".format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - Normal to Y-axis plane")
         self.D = float(surface.params[2])
     def move(self, dx, dy, dz):
         self.D += dy
@@ -264,7 +342,7 @@ class PY:
 # № P D
 class PZ:
     def __init__(self, surface, log = False):
-        if log: print("№ {} - Normal to Z-axis plane".format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - Normal to Z-axis plane")
         self.D = float(surface.params[2])
     def move(self, dx, dy, dz):
         self.D += dz
@@ -279,7 +357,7 @@ class PZ:
 class SO:
     def __init__(self, surface, log = False):
         self.surface = surface
-        if log: print("№ {} - Centred at Origin sphere".format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - Centred at Origin sphere")
         self.R = float(surface.params[2])
     def move(self, dx, dy, dz):
         self.x0 = dx
@@ -317,7 +395,7 @@ class SO:
 # № S x0 y0 z0 R
 class S:
     def __init__(self, surface, log = False):
-        if log: print("№ {} - General sphere".format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - General sphere")
         (self.x0, self.y0, self.z0,
             self.R) = tuple([float(p) for p in surface.params[2:6]])
     def move(self, dx, dy, dz):
@@ -358,7 +436,7 @@ class S:
 # № SX x0 R
 class SX:
     def __init__(self, surface, log=False):
-        if log: print("№ {} - Centered on X-axis sphere".format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - Centered on X-axis sphere")
         self.x0 = float(surface.params[2])
         self.R = float(surface.params[3])
     def move(self, dx, dy, dz):
@@ -398,7 +476,7 @@ class SX:
 # № SY y0 R
 class SY:
     def __init__(self, surface, log=False):
-        if log: print("№ {} - Centered on Y-axis sphere".format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - Centered on Y-axis sphere")
         self.y0 = float(surface.params[2])
         self.R = float(surface.params[3])
     def move(self, dx, dy, dz):
@@ -438,7 +516,7 @@ class SY:
 # № SZ z0 R
 class SZ:
     def __init__(self, surface, log=False):
-        if log: print("№ {} - Centered on Z-axis sphere".format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - Centered on Z-axis sphere")
         self.z0 = float(surface.params[2])
         self.R = float(surface.params[3])
     def move(self, dx, dy, dz):
@@ -478,7 +556,7 @@ class SZ:
 # № C/X y0 z0 R
 class CpX:
     def __init__(self, surface, log=False):
-        if log: print("№ {} - Parallel to X-axis cylinder".format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - Parallel to X-axis cylinder")
         (self.y0, self.z0,
             self.R) = tuple([float(p) for p in surface.params[2:5]])
     def move(self, dx, dy, dz):
@@ -501,7 +579,7 @@ class CpX:
 # № C/Y x0 z0 R
 class CpY:
     def __init__(self, surface, log=False):
-        if log: print("№ {} - Parallel to Y-axis cylinder".format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - Parallel to Y-axis cylinder")
         (self.x0, self.z0,
             self.R) = tuple([float(p) for p in surface.params[2:5]])
     def move(self, dx, dy, dz):
@@ -524,7 +602,7 @@ class CpY:
 # № C/Z x0 y0 R
 class CpZ:
     def __init__(self, surface, log=False):
-        if log: print("№ {} - Parallel to Z-axis cylinder".format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - Parallel to Z-axis cylinder")
         (self.x0, self.y0,
             self.R) = tuple([float(p) for p in surface.params[2:5]])
     def move(self, dx, dy, dz):
@@ -547,7 +625,7 @@ class CpZ:
 # № CX R
 class CX:
     def __init__(self, surface, log=False):
-        if log: print("№ {} - On X-axis cylinder".format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - On X-axis cylinder")
         self.R = float(surface.params[2])
     def move(self, dx, dy, dz):
         self.y0 = dy
@@ -567,7 +645,7 @@ class CX:
 # № CY  R
 class CY:
     def __init__(self, surface, log=False):
-        if log: print("№ {} - On Y-axis cylinder".format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - On Y-axis cylinder")
         self.R = float(surface.params[2])
     def move(self, dx, dy, dz):
         self.x0 = dx
@@ -587,7 +665,7 @@ class CY:
 # № CZ R
 class CZ:
     def __init__(self, surface, log=False):
-        if log: print("№ {} - On Z-axis cylinder".format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - On Z-axis cylinder")
         self.R = float(surface.params[2])
     def move(self, dx, dy, dz):
         self.x0 = dx
@@ -609,7 +687,7 @@ class CZ:
 # p = -1 - x<x0 => increase R
 class KpX:
     def __init__(self, surface, log=False):
-        if log: print("№ {} - Parallel to X-axis cone".format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - Parallel to X-axis cone")
         (self.x0, self.y0, self.z0,
             self.t_2) = tuple([float(p) for p in surface.params[2:6]])
         if len(surface.params)>=7: self.p = float(surface.params[6])
@@ -643,7 +721,7 @@ class KpX:
 # p = -1 - y<y0 => increase R
 class KpY:
     def __init__(self, surface, log=False):
-        if log: print("№ {} - Parallel to Y-axis cone".format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - Parallel to Y-axis cone")
         (self.x0, self.y0, self.z0,
             self.t_2) = tuple([float(p) for p in surface.params[2:6]])
         if len(surface.params)>=7: self.p = float(surface.params[6])
@@ -677,7 +755,7 @@ class KpY:
 # p = -1 - z<z0 => increase R
 class KpZ:
     def __init__(self, surface, log=False):
-        if log: print("№ {} - Parallel to Z-axis cone".format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - Parallel to Z-axis cone")
         (self.x0, self.y0, self.z0,
             self.t_2) = tuple([float(p) for p in surface.params[2:6]])
         if len(surface.params)>=7: self.p = float(surface.params[6])
@@ -711,7 +789,7 @@ class KpZ:
 # p = -1 - x<x0 => increase R
 class KX:
     def __init__(self, surface, log=False):
-        if log: print("№ {} - On X-axis cone".format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - On X-axis cone")
         self.x0 = float(surface.params[2])
         self.t_2 = float(surface.params[3])
         if len(surface.params)>=5: self.p = float(surface.params[4])
@@ -742,7 +820,7 @@ class KX:
 # p = -1 - y<y0 => increase R
 class KY:
     def __init__(self, surface, log=False):
-        if log: print("№ {} - On Y-axis cone".format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - On Y-axis cone")
         self.y0 = float(surface.params[2])
         self.t_2 = float(surface.params[3])
         if len(surface.params)>=5: self.p = float(surface.params[4])
@@ -773,7 +851,7 @@ class KY:
 # p = -1 - z<z0 => increase R
 class KZ:
     def __init__(self, surface, log=False):
-        if log: print("№ {} - On Z-axis cone".format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - On Z-axis cone")
         self.z0 = float(surface.params[2])
         self.t_2 = float(surface.params[3])
         if len(surface.params)>=5: self.p = float(surface.params[4])
@@ -802,8 +880,8 @@ class KZ:
 # № SQ A B C D E F G x0 y0 z0
 class SQ:
     def __init__(self, surface, log=False):
-        if log: print('''№ {} - Axis parallel to X-, Y-, or Z-axis ellipsoid, 
-                    hyperboloid, parabaloid'''.format(surface.params[0]))
+        if log: print(f'''№ {surface.params[0]} - Axis parallel to X-, Y-, or Z-axis ellipsoid, 
+                    hyperboloid, parabaloid''')
         (self.A, self.B, self.C, self.D, self.E, self.F, self.G, self.x0,
             self.y0, self.z0) = tuple([float(p) for p in surface.params[2:12]])
     def move(self, dx, dy, dz):
@@ -832,8 +910,8 @@ class SQ:
 # № GQ A B C D E F G H J K
 class GQ:
     def __init__(self, surface, log=False):
-        if log: print('''№ {} - Axes not parallel to X-, Y-, or Z-axis 
-        cylinder, cone, ellipsoid, hyperboloid, parabaloid'''.format(surface.params[0]))
+        if log: print(f'''№ {surface.params[0]} - Axes not parallel to X-, Y-, or Z-axis 
+        cylinder, cone, ellipsoid, hyperboloid, parabaloid''')
         (self.A, self.B, self.C, self.D, self.E, self.F, self.G, self.H,
             self.J, self.K) = tuple([float(p) for p in surface.params[2:12]])
     def move(self, dx, dy, dz):
@@ -868,8 +946,8 @@ class GQ:
 # № TX x0 y0 z0 A B C
 class TX:
     def __init__(self, surface, log=False):
-        if log: print('''№ {} - Axis is parallel to X-axis elliptical
-                        or circular torus'''.format(surface.params[0]))
+        if log: print(f'''№ {surface.params[0]} - Axis is parallel to X-axis elliptical
+                        or circular torus''')
         (self.x0, self.y0, self.z0, self.A, self.B,
             self.C) = tuple([float(p) for p in surface.params[2:8]])
     def move(self, dx, dy, dz):
@@ -892,8 +970,8 @@ class TX:
 # № TY x0 y0 z0 A B C
 class TY:
     def __init__(self, surface, log=False):
-        if log: print('''№ {} - Axis is parallel to Y-axis elliptical
-                        or circular torus'''.format(surface.params[0]))
+        if log: print(f'''№ {surface.params[0]} - Axis is parallel to Y-axis elliptical
+                        or circular torus''')
         (self.x0, self.y0, self.z0, self.A, self.B,
             self.C) = tuple([float(p) for p in surface.params[2:8]])
     def move(self, dx, dy, dz):
@@ -916,8 +994,8 @@ class TY:
 # № TZ x0 y0 z0 A B C
 class TZ:
     def __init__(self, surface, log=False):
-        if log: print('''№ {} - Axis is parallel to Z-axis elliptical
-                        or circular torus'''.format(surface.params[0]))
+        if log: print(f'''№ {surface.params[0]} - Axis is parallel to Z-axis elliptical
+                        or circular torus''')
         (self.x0, self.y0, self.z0, self.A, self.B,
             self.C) = tuple([float(p) for p in surface.params[2:8]])
     def move(self, dx, dy, dz):
@@ -939,8 +1017,8 @@ class TZ:
 # № BOX Vx Vy Vz A1x A1y A1z A2x A2y A2z A3x A3y A3z
 class BOX:
     def __init__(self, surface, log=False):
-        if log: print('''№ {} - Arbitrarily oriented 
-                        ortogonal box'''.format(surface.params[0]))
+        if log: print(f'''№ {surface.params[0]} - Arbitrarily oriented 
+                        ortogonal box''')
         self.Vx = float(surface.params[2])
         self.Vy = float(surface.params[3])
         self.Vz = float(surface.params[4])
@@ -980,8 +1058,7 @@ class BOX:
 # № RPP Xmin Xmax Ymin Ymax Zmin Zmax
 class RPP:
     def __init__(self, surface, log=False):
-        if log: print('''№ {} - Rectangular 
-                        Parallelepiped'''.format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - Rectangular Parallelepiped")
         (self.Xmin, self.Xmax, self.Ymin, self.Ymax, self.Zmin,
             self.Zmax) = tuple([float(p) for p in surface.params[2:8]])
     def move(self, dx, dy, dz):
@@ -1007,7 +1084,7 @@ class RPP:
 # № SPH Vx Vy Vz R
 class SPH:
     def __init__(self, surface, log=False):
-        if log: print('''№ {} - Sphere'''.format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - Sphere")
         self.Vx = float(surface.params[2])
         self.Vy = float(surface.params[3])
         self.Vz = float(surface.params[4])
@@ -1031,8 +1108,7 @@ class SPH:
 # № RCC Vx Vy Vz Hx Hy Hz R
 class RCC:
     def __init__(self, surface, log=False):
-        if log: print('''№ {} - Right Circular 
-                        Cylinder'''.format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - Right Circular Cylinder")
         self.Vx = float(surface.params[2])
         self.Vy = float(surface.params[3])
         self.Vz = float(surface.params[4])
@@ -1061,7 +1137,7 @@ class RCC:
 # № RHP(HEX) v1 v2 v3 h1 h2 h3 r1 r2 r3 s1 s2 s3 t1 t2 t3
 class RHP:
     def __init__(self, surface, log=False):
-        if log: print('''№ {} - Right Hexogonal Prism'''.format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - Right Hexogonal Prism")
         (self.v1, self.v2, self.v3, self.h1, self.h2, self.h3, self.r1,
             self.r2, self.r3, self.s1, self.s2, self.s3, self.t1, self.t2, 
             self.t3) = tuple([float(p) for p in surface.params[2:17]])
@@ -1092,8 +1168,7 @@ class RHP:
 # № REC Vx Vy Vz Hx Hy Hz V1x V1y V1z V2x V2y V2z
 class REC:
     def __init__(self, surface, log=False):
-        if log: print('''№ {} - Right Elliptical
-                        Cylinder'''.format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - Right Elliptical Cylinder")
         (self.Vx, self.Vy, self.Vz, self.Hx, self.Hy, self.Hz,
             self.V1x, self.V1y, self.V1z, self.V2x, self.V2y,
             self.V2z) = tuple([float(p) for p in surface.params[2:14]])
@@ -1121,8 +1196,7 @@ class REC:
 # № TRC Vx Vy Vz Hx Hy Hz R1 R2
 class TRC:
     def __init__(self, surface, log=False):
-        if log: print('''№ {} - Truncated Right-angle
-                        Cone'''.format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - Truncated Right-angle Cone")
         (self.Vx, self.Vy, self.Vz, self.Hx, self.Hy, self.Hz,
             self.R1, self.R2) = tuple([float(p) for p in surface.params[2:10]])
     def move(self, dx, dy, dz):
@@ -1145,7 +1219,7 @@ class TRC:
 # № ELL V1x V1y V1z V2x V2y V2z Rm
 class ELL:
     def __init__(self, surface, log=False):
-        if log: print('''№ {} - ELLipsoids'''.format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - ELLipsoids")
         (self.V1x, self.V1y, self.V1z, self.V2x, self.V2y, self.V2z,
             self.Rm) = tuple([float(p) for p in surface.params[2:9]])
     def move(self, dx, dy, dz):
@@ -1171,7 +1245,7 @@ class ELL:
 # № WED Vx Vy Vz V1x V1y V1z V2x V2y V2z V3x V3y V3z
 class WED:
     def __init__(self, surface, log=False):
-        if log: print('''№ {} - Wedge'''.format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - Wedge")
         (self.Vx, self.Vy, self.Vz, self.V1x, self.V1y, self.V1z,
             self.V2x, self.V2y, self.V2z, self.V3x, self.V3y,
             self.V3z) = tuple([float(p) for p in surface.params[2:14]])
@@ -1199,7 +1273,7 @@ class WED:
 # № ARB ax ay az bx by bz cx cy cz ... hx by hz N1 N2 N3 N4 N5 N6
 class ARB:
     def __init__(self, surface, log=False):
-        if log: print('''№ {} - ARBitrary polyhedron'''.format(surface.params[0]))
+        if log: print(f"№ {surface.params[0]} - ARBitrary polyhedron")
         (self.ax, self.ay, self.az, self.bx, self.by, self.bz,
             self.cx, self.cy, self.cz, self.dx, self.dy, self.dz,
             self.ex, self.ey, self.ez, self.fx, self.fy, self.fz,

@@ -1,4 +1,4 @@
-from mcnp_geometry import Cell, Surface, MNEMONICS
+from mcnp_geometry import Cell, Surface
 
 class Ifile:
     def __init__(self, filename):
@@ -10,12 +10,10 @@ class Ifile:
         surface_line = ''
         surfaces = []
         data_section = ''
+        (old_comment, comment) = ('', '')
         block = "title_card"
         with open(filename, 'r') as file:
             for line in file.readlines():
-                if line.startswith("C") or line.startswith("c"):
-                    if block == "title_card": title_card += line
-                    else: continue
                 if line.strip() == '':
                     empty_lines += 1
                     continue
@@ -26,25 +24,31 @@ class Ifile:
                     cell_line = line
                     continue
                 if block == "cells" and empty_lines == 1:
-                    cells.append(Cell(cell_line))
+                    cells.append(Cell(old_comment + cell_line + comment))
+                    (old_comment, comment) = ('', '')
                     block = "surfaces"
-                    surface_line = line
-                    continue
                 if block == "surfaces" and empty_lines == 2:
-                    surfaces.append(Surface(surface_line))
+                    surfaces.append(Surface(old_comment + surface_line + comment))
                     block = "data_section"
                 if block == "title_card":
                     title_card += line
                 elif block == "cells":
                     if line[0].isdigit():
-                        cells.append(Cell(cell_line))
+                        cells.append(Cell(old_comment + cell_line))
+                        (old_comment, comment) = (comment, '')
                         cell_line = line
+                    elif line.startswith('C') or line.startswith('c'):
+                        comment += line
                     else:
                         cell_line += line
-                elif block == "surfaces":
-                    if line[0].isdigit():
-                        surfaces.append(Surface(surface_line))
+                elif block == "surfaces": 
+                    if line[0].isdigit() and surface_line != '':
+                        surfaces.append(Surface(old_comment + surface_line))
+                        (old_comment, comment) = (comment, '')
                         surface_line = line
+                    elif line.startswith('C') or line.startswith('c'):
+                        if surface_line == '': old_comment += line
+                        else: comment += line
                     else:
                         surface_line += line
                 elif block == "data_section":
@@ -54,9 +58,10 @@ class Ifile:
         self.surfaces = surfaces
         self.data_section = data_section
     def find_similar_surfaces(self):
+        print("Searching for similar surfaces:")
         groups = []
         for i in range(len(self.surfaces)):
-            if i % 300 == 0: print("Прогресс поиска: "+str(round(100*i/len(self.surfaces)))+"%")
+            printProgressBar(i+1, len(self.surfaces))
             for j in range(i+1, len(self.surfaces)):
                 surf_i = self.surfaces[i]
                 surf_j = self.surfaces[j]
@@ -70,25 +75,12 @@ class Ifile:
                                 new_group = False
                     if new_group:
                         groups.append([surf_i, surf_j])
+        if len(groups) == 0: print("not found similar surfaces")
+        for i in range(len(groups)):
+            print(f"group {i+1}: " + " ".join([str(s.number) for s in groups[i]]))
         return groups
-
     def replace_similar_surfaces(self):
-        groups = []
-        for i in range(len(self.surfaces)):
-            if i % 300 == 0: print("Прогресс поиска: "+str(round(100*i/len(self.surfaces)))+"%")
-            for j in range(i+1, len(self.surfaces)):
-                surf_i = self.surfaces[i]
-                surf_j = self.surfaces[j]
-                new_group = True
-                if surf_i.similar_with(surf_j):
-                    for i1 in range(len(groups)):
-                        for j1 in range(len(groups[i1])):
-                            if groups[i1][j1].number == surf_i.number:
-                                if not surf_j.number in [s.number for s in groups[i1]]:
-                                    groups[i1] += [surf_j]
-                                new_group = False
-                    if new_group:
-                        groups.append([surf_i, surf_j])
+        groups = self.find_similar_surfaces()
         for i in range(len(groups)):
             if i % 100 == 0: print("Прогресс замены: "+str(round(100*i/len(groups)))+"%")
             for g in groups[i][1:]:
@@ -118,3 +110,13 @@ class Ifile:
             for s in self.surfaces:
                 file.write("\n" + str(s))
             file.write("\n\n" + self.data_section)
+    def change(self, old, new):
+        pass
+
+def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 50, fill = '█', printEnd = "\r"):
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
+    if iteration == total: 
+        print()

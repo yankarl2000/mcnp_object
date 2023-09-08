@@ -1,9 +1,5 @@
 '''
 todo list:
-добавить независимость регистра в MNEMONIC
-
-обработка трансформаций. После номера поверхности может следовать номер трансформации
-синтаксис трансформаций TR1
 
 причесать вывод find_sim_surf
 
@@ -11,6 +7,14 @@ todo list:
 сделать скрипт замены всех совпадающих поверхностей и удаления лишних с сохранением в файл
 с комментариями $ и C и без
 
+попробовать внедрить скрипт объёмов
+'''
+
+'''
+Usage: mcnp_parser [OPTIONS]
+
+Options:
+  --help  Show this message and exit.
 '''
 import sys
 import pathlib
@@ -52,6 +56,12 @@ if __name__ == '__main__':
             exit()
         i_file = mf.Ifile(sys.argv[2])
         i_file.find_similar_surfaces()
+    elif cmd == "move_surf":
+        if len(sys.argv)<3:
+            print("empty filename")
+            exit()
+        i_file = mf.Ifile(sys.argv[2])
+        i_file.surfaces[0].move(1,1,1)
     elif cmd == "del_sim_surf":
         print("the command is del_sim_surf")
     elif cmd == "change_hist":
