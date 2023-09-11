@@ -105,11 +105,11 @@ class Ifile:
         with open(filename, 'a') as file:
             file.write(str(self.cells[0]))
             for i in range(1, len(self.cells)):
-                file.write("\n" + str(self.cells[i]))
-            file.write("\n")
+                file.write(str(self.cells[i]))
+            file.write('\n')
             for s in self.surfaces:
-                file.write("\n" + str(s))
-            file.write("\n\n" + self.data_section)
+                file.write(str(s))
+            file.write('\n' + self.data_section)
     def change(self, old, new):
         pass
 

@@ -66,6 +66,7 @@ class Cell:
                 parameters[text_split[i]] = text_split[i+1]
         return parameters
     def __str__(self):
+        return self.text
         c_list = self.description_text.split()
         cell_text = c_list[0]
         for c in c_list[1:]:
@@ -141,14 +142,9 @@ class Surface:
             if comment_block: comment_text += c
             else: description_text += c
         description_text = description_text.replace('&', '')
-        print('--------------------')
-        print(self.text)
-        print('--------------------')
-        print(text)
-        print('--------------------')
         self.params = description_text.split()
         self.comment_text = comment_text
-        if len(self.params) < 3: print("bad description")
+        if len(self.params) < 3: print("bad surface description")
         if self.params[0].startswith('*'):
             print('find * at beginning surface description')
             self.number = int(self.params[0][1:])
@@ -211,6 +207,7 @@ class Surface:
         else:
             return False
     def __str__(self):
+        return self.text
         s_list = [str(self.number), self.mnemonic] + self.equation.str_params()
         s_string = s_list[0]
         for s in s_list[1:]:
